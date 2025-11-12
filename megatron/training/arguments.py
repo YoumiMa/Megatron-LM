@@ -115,6 +115,21 @@ def parse_args(extra_args_provider=None, ignore_unknown_args=False):
         assert MultiStorageClientFeature.is_enabled() is False
         print('WARNING: The MSC feature is disabled.')
 
+
+    if args.use_mpi:
+        global_rank = int(os.getenv('OMPI_COMM_WORLD_RANK', 0))
+        local_rank = int(os.getenv('OMPI_COMM_WORLD_LOCAL_RANK', 0))
+        world_size = int(os.getenv('OMPI_COMM_WORLD_SIZE', 1))
+
+        os.environ['RANK'] = str(global_rank)
+        os.environ['LOCAL_RANK'] = str(local_rank)
+        os.environ['WORLD_SIZE'] = str(world_size)
+
+        args.rank = int(os.getenv('RANK', '0'))
+        args.world_size = int(os.getenv("WORLD_SIZE", '1'))
+
+        args.local_rank = local_rank
+        
     return args
 
 
@@ -702,6 +717,7 @@ def validate_args(args, defaults={}):
     args.consumed_train_samples = 0
     args.skipped_train_samples = 0
     args.consumed_valid_samples = 0
+    args.consumed_train_tokens = 0
 
     # Support for variable sequence lengths across batches/microbatches.
     # set it if the dataloader supports generation of variable sequence lengths
@@ -1638,6 +1654,10 @@ def _add_logging_args(parser):
                        action='store_false',
                        help='Disable loss-scale logging to tensorboard.',
                        dest='log_loss_scale_to_tensorboard')
+    group.add_argument('--no-log-learnig-rate-to-tensorboard',
+                       action='store_false',
+                       help='Disable learning rate logging to tensorboard.',
+                       dest='log_learning_rate_to_tensorboard')
     group.add_argument('--log-validation-ppl-to-tensorboard',
                        action='store_true',
                        help='If set, write validation perplexity to '
@@ -1654,6 +1674,9 @@ def _add_logging_args(parser):
                        help='The wandb experiment name.')
     group.add_argument('--wandb-save-dir', type=str, default='',
                        help='Path to save the wandb results locally.')
+    group.add_argument('--wandb-log-interval', type=int, default=5,
+                       help='Log interval for wandb',
+                       dest='wandb_log_interval')
     group.add_argument('--logging-level', type=int, default=None,
                        help='Set default logging level')
     return parser
@@ -2413,6 +2436,8 @@ def _add_distributed_args(parser):
                        "and must be consistent across all ranks.")
     group.add_argument('--replication-factor', default=2, type=int,
                        help="Number of machines storing the replica of a given rank's data.")
+    group.add_argument('--use-mpi',action='store_true', help="when using mpirun, set this argument")
+
     return parser
 
 

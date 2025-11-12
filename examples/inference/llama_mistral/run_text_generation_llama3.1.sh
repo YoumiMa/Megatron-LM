@@ -4,7 +4,7 @@ export NCCL_IB_SL=1
 export CUDA_DEVICE_MAX_CONNECTIONS=1
 export NVTE_APPLY_QK_LAYER_SCALING=0
 
-DISTRIBUTED_ARGS="--nproc_per_node 1 \
+DISTRIBUTED_ARGS="--nproc_per_node 2 \
                   --nnodes 1 \
                   --node_rank 0 \
                   --master_addr 0.0.0.0 \
@@ -43,7 +43,7 @@ torchrun $DISTRIBUTED_ARGS tools/run_text_generation_server.py   \
       --use-rope-scaling \
       --use-rotary-position-embeddings \
       --swiglu \
-      --tensor-model-parallel-size 1  \
+      --tensor-model-parallel-size 2  \
       --pipeline-model-parallel-size 1  \
       --num-layers 32  \
       --hidden-size 4096  \
@@ -53,4 +53,5 @@ torchrun $DISTRIBUTED_ARGS tools/run_text_generation_server.py   \
       --max-position-embeddings 131072  \
       --bf16  \
       --micro-batch-size 1  \
-      --seq-length 8192
+      --seq-length 8192 \
+

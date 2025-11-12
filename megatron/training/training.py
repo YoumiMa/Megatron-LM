@@ -11,6 +11,7 @@ import math
 import os
 import sys
 from typing import List, Optional
+import wandb 
 
 import torch.distributed
 from .log_handler import CustomHandler
@@ -1587,8 +1588,10 @@ def training_log(
     learning_rate = reduce_max_stat_across_model_parallel_group(learning_rate)
     # Tensorboard values.
     # Timer requires all the ranks to call.
-    if args.log_timers_to_tensorboard and (iteration % args.tensorboard_log_interval == 0):
-        timers.write(timers_to_log, writer, iteration, normalizer=total_iterations)
+    if args.log_timers_to_tensorboard and \
+       (iteration % args.tensorboard_log_interval == 0):
+        timers.write(timers_to_log, writer, iteration,
+                     normalizer=total_iterations, barrier=False, wandb_writer=wandb_writer)
     if writer and (iteration % args.tensorboard_log_interval == 0):
         if wandb_writer:
             wandb_writer.log({'samples vs steps': args.consumed_train_samples}, iteration)
@@ -1675,6 +1678,32 @@ def training_log(
         MTPLossLoggingHelper.track_mtp_metrics(
             mtp_loss_scale, iteration, writer, wandb_writer, total_loss_dict
         )
+        
+    wandb_stats: dict[str, typing.Any] = {}
+
+    if wandb_writer and (iteration % args.wandb_log_interval == 0) and is_last_rank():
+        wandb_stats["utils/steps-vs-samples"] = args.consumed_train_samples
+        wandb_stats["utils/steps-vs-tokens"] = args.consumed_train_tokens
+
+        if args.log_learning_rate_to_tensorboard:
+            wandb_stats["utils/learning-rate"] = learning_rate
+            
+        for key in loss_dict:
+            wandb_stats[f"lm-loss-training/{key}"] = loss_dict[key]
+            wandb_stats[f"lm-loss-training/{key}_ppl"] = math.exp(total_loss_dict[key].item())
+        if args.log_loss_scale_to_tensorboard:
+            wandb_stats["others/loss-scale"] = loss_scale
+        if grad_norm is not None:
+            wandb_stats["others/grad-norm"] = grad_norm
+        if num_zeros_in_grad is not None:
+            wandb_stats["others/num-zeros"] = num_zeros_in_grad
+        if params_norm is not None:
+            wandb_stats["others/params-norm"] = params_norm
+        if hasattr(args, 'actual_seq_length'):
+            wandb_stats["others/actual_seq_length"] = args.actual_seq_length
+
+        wandb.log(wandb_stats, step=iteration)
+        
     if iteration % args.log_interval == 0:
         if args.record_memory_history and is_last_rank():
             snapshot = torch.cuda.memory._snapshot()
@@ -1692,6 +1721,9 @@ def training_log(
 
         one_logger_utils.track_e2e_metrics(args.log_throughput, throughput)
 
+        if wandb_writer and is_last_rank():
+            wandb_writer.log(wandb_stats, step=iteration)
+            
         if args.log_timers_to_tensorboard:
             if writer:
                 writer.add_scalar('iteration-time', elapsed_time_per_iteration, iteration)
@@ -2316,6 +2348,8 @@ def train(
             mpu.get_data_parallel_world_size() * args.micro_batch_size * get_num_microbatches()
         )
         args.consumed_train_samples += batch_size
+        args.consumed_train_tokens += args.seq_length * batch_size
+        
         num_skipped_samples_in_batch = (
             get_current_global_batch_size() - get_current_running_global_batch_size()
         )
@@ -2428,6 +2462,9 @@ def train(
     writer = get_tensorboard_writer()
     if writer:
         writer.flush()
+    wandb_writer = get_wandb_writer()
+    if wandb_writer:
+        wandb_writer.finish()
 
     # Close out pre-hooks if using distributed optimizer and overlapped param gather.
     if pre_hook_enabled:

@@ -450,3 +450,10 @@ class Timers:
             for name in name_to_min_max_time:
                 _, max_time = name_to_min_max_time[name]
                 writer.add_scalar(name + '-time', max_time, iteration)
+
+        if wandb_writer is not None:
+            import wandb
+
+            for name in name_to_min_max_time:
+                _, max_time = name_to_min_max_time[name]
+                wandb.log({'timers/' + name + '-time': max_time}, step=iteration)
