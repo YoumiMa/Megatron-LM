@@ -1,7 +1,7 @@
 #! /bin/sh
 #$ -cwd
-#$ -l node_f=2
-#$ -l h_rt=00:10:00
+#$ -l node_f=4
+#$ -l h_rt=01:00:00
 
 # module load
 module load openmpi/5.0.7-gcc
@@ -71,14 +71,27 @@ CHECKPOINT_SAVE_DIR=/gs/bs/tga-okazaki/ma/ckpts/llama-3.1-8B-megatron_tp${TENSOR
 mkdir -p ${CHECKPOINT_SAVE_DIR}
 
 # data config
-DATASET_DIR=/gs/bs/tga-okazaki/ma/data/japanese-wikipedia
+DATASET_DIR="/gs/bs/tga-okazaki/ma/data/smbcgic_processed"
 
 TRAIN_DATA_PATH=""
 
-# japanese wikipedia
-TRAIN_DATA_PATH="${TRAIN_DATA_PATH} 1 ${DATASET_DIR}/processed_text_document"
+# smbc data
+# DATASET_DIR配下の全てのサブディレクトリを追加
+for FILE in "${DATASET_DIR}"/*; do
+    if [[ "$FILE" == *.idx ]]; then
+            BASENAME=$(basename "$FILE")
+            
+            # Remove _text_document.idx suffix
+            NAME="${BASENAME%_text_document.idx}"
+            # echo "Found dataset: $NAME"
+            
+            # Add to blended dataset path with weight 1
+            TRAIN_DATA_PATH="${TRAIN_DATA_PATH} 1 ${DATASET_DIR}/${NAME}_text_document"
+        fi
+done
 
-echo ${TRAIN_DATA_PATH}
+echo "TRAIN_DATA_PATH=$TRAIN_DATA_PATH"
+
 # job name
 JOB_NAME="Llama-3.1-8b-${NODE_TYPE}-${NUM_NODES}node-${NUM_GPUS}gpu"
 
@@ -131,6 +144,7 @@ mpirun -np $WORLD_SIZE \
   ${CHECKPOINT_ARGS} \
   --save ${CHECKPOINT_SAVE_DIR} \
   --data-path ${TRAIN_DATA_PATH} \
+  --split 970,30,0 \
   --distributed-backend nccl \
   --lr ${LR} \
   --min-lr ${MIN_LR} \
@@ -141,10 +155,10 @@ mpirun -np $WORLD_SIZE \
   --optimizer adam \
   --adam-beta1 0.9 \
   --adam-beta2 0.95 \
-  --log-interval 1 \
+  --log-interval 10 \
   --log-progress \
-  --save-interval 1 \
-  --eval-interval 1 \
+  --save-interval 100 \
+  --eval-interval 10 \
   --eval-iters 1 \
   --bf16 \
   --untie-embeddings-and-output-weights \
