@@ -1,0 +1,13 @@
+r20n3 192 all.q@r20n3 <NULL>
+r1n5 192 all.q@r1n5 <NULL>
+r6n9 192 all.q@r6n9 <NULL>
+r6n7 192 all.q@r6n7 <NULL>
+4
+Number of slots: 768
+MASTER_ADDR=r20n3
+MASTER_PORT=35037
+8
+TRAIN_DATA_PATH= 1 /gs/bs/tga-okazaki/ma/data/smbcgic_processed/1993_2020_cleaned_text_document 1 /gs/bs/tga-okazaki/ma/data/smbcgic_processed/arxiv_cleaned_text_document 1 /gs/bs/tga-okazaki/ma/data/smbcgic_processed/boj_documents_en_text_document 1 /gs/bs/tga-okazaki/ma/data/smbcgic_processed/boj_documents_jp_text_document 1 /gs/bs/tga-okazaki/ma/data/smbcgic_processed/daiwa_terms_text_document 1 /gs/bs/tga-okazaki/ma/data/smbcgic_processed/earnings_calls_10k_disclosures_text_document 1 /gs/bs/tga-okazaki/ma/data/smbcgic_processed/edinet_text_data_text_document 1 /gs/bs/tga-okazaki/ma/data/smbcgic_processed/finance_textbooks_html_text_document 1 /gs/bs/tga-okazaki/ma/data/smbcgic_processed/finance_textbooks_md_text_document 1 /gs/bs/tga-okazaki/ma/data/smbcgic_processed/naikakuhu_japan_report_text_document 1 /gs/bs/tga-okazaki/ma/data/smbcgic_processed/naikakuhu_keizaihakusyo_report_text_document 1 /gs/bs/tga-okazaki/ma/data/smbcgic_processed/naikakuhu_world_report_text_document 1 /gs/bs/tga-okazaki/ma/data/smbcgic_processed/nomura_terms_text_document 1 /gs/bs/tga-okazaki/ma/data/smbcgic_processed/RTRS_ALL_deduped_text_document 1 /gs/bs/tga-okazaki/ma/data/smbcgic_processed/smbc_investigation_report_text_document 1 /gs/bs/tga-okazaki/ma/data/smbcgic_processed/smbc_monthly_report_text_document 1 /gs/bs/tga-okazaki/ma/data/smbcgic_processed/第一生命経済研究所_金融庁_text_document
+The CHECKPOINT ARG is:  --load /gs/bs/tga-okazaki/ma/cache/Llama-3.1-8B/megatron_tp1_pp2/ --no-load-rng --no-load-optim
+world size is: 16
+hostfile: ./hostfile/hostfile_6247120

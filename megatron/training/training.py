@@ -1680,7 +1680,6 @@ def training_log(
         )
         
     wandb_stats: dict[str, typing.Any] = {}
-
     if wandb_writer and (iteration % args.wandb_log_interval == 0) and is_last_rank():
         wandb_stats["utils/steps-vs-samples"] = args.consumed_train_samples
         wandb_stats["utils/steps-vs-tokens"] = args.consumed_train_tokens
@@ -1701,8 +1700,6 @@ def training_log(
             wandb_stats["others/params-norm"] = params_norm
         if hasattr(args, 'actual_seq_length'):
             wandb_stats["others/actual_seq_length"] = args.actual_seq_length
-
-        wandb.log(wandb_stats, step=iteration)
         
     if iteration % args.log_interval == 0:
         if args.record_memory_history and is_last_rank():
@@ -1732,6 +1729,7 @@ def training_log(
         log_string = f" [{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]"
         log_string += ' iteration {:8d}/{:8d} |'.format(iteration, args.train_iters)
         log_string += ' consumed samples: {:12d} |'.format(args.consumed_train_samples)
+        log_string += ' consumed tokens: {:12d} |'.format(args.consumed_train_tokens)
         if args.skipped_train_samples > 0:
             log_string += ' skipped samples: {:12d} |'.format(args.skipped_train_samples)
         log_string += ' elapsed time per iteration (ms): {:.1f} |'.format(

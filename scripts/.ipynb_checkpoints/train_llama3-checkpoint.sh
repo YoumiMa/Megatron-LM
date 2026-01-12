@@ -1,40 +1,55 @@
+#!/bin/bash
 #! /bin/sh
-#$ -cwd
-#$ -l node_f=2
-#$ -l h_rt=00:10:00
+#PBS -P gch51650  
+#PBS -q rt_HF
+#PBS -l select=2:mpiprocs=8  -k oe
+#PBS -l walltime=12:00:00
+#PBS -v USE_SSH=1
 
 # module load
-module load openmpi/5.0.7-gcc
+source /etc/profile.d/modules.sh
 
-cat $PE_HOSTFILE
-echo $NHOSTS
-echo "Number of slots: ${NSLOTS}"
-# export MASTER_ADDR=$(cat $PE_HOSTFILE | head -1 | cut -d ' ' -f 1)
-# export MASTER_PORT=$((10000 + ($JOB_ID % 50000)))
-export MASTER_ADDR=$(head -n1 $PE_HOSTFILE | awk '{print $1}')
-export MASTER_PORT=$(python3 -c "import socket; s=socket.socket(); s.bind(('',0)); print(s.getsockname()[1]); s.close()")
+module load cuda/12.8/12.8.1
+module load python/3.12/3.12.9  
+module load cudnn/9.10/9.10.2
+module load nccl/2.23/2.23.4-1
+module load hpcx/2.20
+module load gcc/13.2.0
 
+# python virtualenv
+source venv/cpt/bin/activate
+
+pip install pybind11
+# distributed settings
+JOBID=${PBS_JOBID%%.*}
+export MASTER_ADDR=$(/usr/sbin/ip a show dev bond0 | grep 'inet ' | awk '{ print $2 }' | cut -d "/" -f 1)
+export MASTER_PORT=$((10000 + ($JOBID % 50000)))
 
 echo "MASTER_ADDR=${MASTER_ADDR}"
-echo "MASTER_PORT=${MASTER_PORT}"
 
-NODE_TYPE="h100"
-export NUM_GPU_PER_NODE=$(nvidia-smi -L | wc -l)
+# hostfile
 
-NUM_NODES=$(wc -l < "$PE_HOSTFILE")
-NUM_GPUS=$((${NUM_NODES} * ${NUM_GPU_PER_NODE}))
+if [[ "$PBS_QUEUE" == "rt_HF" ]]; then
+  export NUM_GPU_PER_NODE=8
+  NODE_TYPE="h200"
+elif [[ "$PBS_QUEUE" == "rt_HG" ]]; then
+  export NUM_GPU_PER_NODE=1
+  NODE_TYPE="h200"
+else
+  echo "Unrecognized PBS_QUEUE: $PBSclear
+  _QUEUE"
+fi
+
+NUM_GPUS=$(wc -l < "$PBS_NODEFILE")
+NUM_NODES=$((${NUM_GPUS} / ${NUM_GPU_PER_NODE}))
 
 mkdir -p ./hostfile
 
-HOSTFILE_NAME=./hostfile/hostfile_${JOB_ID}
+HOSTFILE_NAME=./hostfile/hostfile_${JOBID}
 
-# 元のホストファイルを読んで、スロット数を48で割ってGPU数に変換
 while read -r line; do
-  hostname=$(echo "$line" | awk '{print $1}')
-  slots=$(echo "$line" | awk '{print $2}')
-  gpus=$((slots / 48))
-  echo "${hostname} slots=${gpus}"
-done < "$PE_HOSTFILE" > "$HOSTFILE_NAME"
+  echo "${line}"
+done <"$PBS_NODEFILE" >"$HOSTFILE_NAME"
 
 # model config
 # llama-2-7b: https://huggingface.co/meta-llama/Llama-2-7b-hf/blob/main/config.json
@@ -55,47 +70,32 @@ echo $DATA_PARALLEL_SIZE
 # training config
 MICRO_BATCH_SIZE=1
 GLOBAL_BATCH_SIZE=512
-TRAIN_STEPS=3000
+TRAIN_STEPS=500
 
 LR=1e-4
 MIN_LR=1e-5
-LR_WARMUP_STEPS=300
+LR_WARMUP_STEPS=50
 WEIGHT_DECAY=0.1
 GRAD_CLIP=1
 
 # model config
-TOKENIZER_MODEL=meta-llama/Llama-3.1-8B
-CHECKPOINT_DIR=/gs/bs/tga-okazaki/ma/cache/Llama-3.1-8B/megatron_tp1_pp2/
-CHECKPOINT_SAVE_DIR=/gs/bs/tga-okazaki/ma/ckpts/llama-3.1-8B-megatron_tp${TENSOR_PARALLEL_SIZE}_pp${PIPELINE_PARALLEL_SIZE}_LR${LR}
-PATH_TO_TORCH_CKPT=/gs/bs/tga-okazaki/ma/ckpts/llama-3.1-8B-megatron_tp${TENSOR_PARALLEL_SIZE}_pp${PIPELINE_PARALLEL_SIZE}_LR${LR}_torch/
+TOKENIZER_MODEL=meta-llama/Meta-Llama-3.1-8B
+CHECKPOINT_DIR=/groups/gcb50243/ma/cache/llama-3.1-8B/megatron_tp1_pp2/
+CHECKPOINT_SAVE_DIR=/groups/gcb50243/ma/ckpts/llama-3.1-8B-megatron_tp${TENSOR_PARALLEL_SIZE}_pp${PIPELINE_PARALLEL_SIZE}_LR${LR}
 
 mkdir -p ${CHECKPOINT_SAVE_DIR}
-mkdir -p ${PATH_TO_TORCH_CKPT}
 
 # data config
-DATASET_DIR="/gs/bs/tga-okazaki/ma/data/smbcgic_processed"
+DATASET_DIR=/groups/gcb50243/ma/data/japanese-wikipedia/processed
 
 TRAIN_DATA_PATH=""
 
-# smbc data
-# DATASET_DIR配下の全てのサブディレクトリを追加
-for FILE in "${DATASET_DIR}"/*; do
-    if [[ "$FILE" == *.idx ]]; then
-            BASENAME=$(basename "$FILE")
-            
-            # Remove _text_document.idx suffix
-            NAME="${BASENAME%_text_document.idx}"
-            # echo "Found dataset: $NAME"
-            
-            # Add to blended dataset path with weight 1
-            TRAIN_DATA_PATH="${TRAIN_DATA_PATH} 1 ${DATASET_DIR}/${NAME}_text_document"
-        fi
-done
+# japanese wikipedia
+TRAIN_DATA_PATH="${TRAIN_DATA_PATH} 1 ${DATASET_DIR}/ja_wiki_text_document"
 
-echo "TRAIN_DATA_PATH=$TRAIN_DATA_PATH"
-
+echo ${TRAIN_DATA_PATH}
 # job name
-JOB_NAME="Llama-3.1-8b-${NODE_TYPE}-${NUM_NODES}node-${NUM_GPUS}gpu"
+JOB_NAME="Llama-3-8b-${NODE_TYPE}-${NUM_NODES}node-${NUM_GPUS}gpu"
 
 # checkpoint load
 if [ -f "${CHECKPOINT_SAVE_DIR}/latest_checkpointed_iteration.txt" ]; then
@@ -110,13 +110,11 @@ echo "The CHECKPOINT ARG is:  ${CHECKPOINT_ARGS}"
 export WORLD_SIZE=$NUM_GPUS
 echo "world size is: ${WORLD_SIZE}"
 echo "hostfile: $HOSTFILE_NAME"
-cd ~/fs/Megatron-LM/
-
-CONTAINER_IMAGE="/gs/fs/tga-okazaki/ma/megatron-container"
+cd Megatron-LM/
 # run
 mpirun -np $WORLD_SIZE \
   --npernode $NUM_GPU_PER_NODE \
-  -hostfile $HOSTFILE_NAME \
+  -hostfile $PBS_NODEFILE \
   -x MASTER_ADDR=$MASTER_ADDR \
   -x MASTER_PORT=$MASTER_PORT \
   -x CUDA_DEVICE_MAX_CONNECTIONS=1 \
@@ -124,10 +122,6 @@ mpirun -np $WORLD_SIZE \
   -x NCCL_P2P_LEVEL=NVL \
   -x PATH \
   -bind-to none \
-  apptainer run --nv \
-  --env MASTER_ADDR=$MASTER_ADDR \
-  --env MASTER_PORT=$MASTER_PORT \
-  -w -B /gs -B /apps -B /home ${CONTAINER_IMAGE} \
   python pretrain_gpt.py \
   --tensor-model-parallel-size ${TENSOR_PARALLEL_SIZE} \
   --pipeline-model-parallel-size ${PIPELINE_PARALLEL_SIZE} \
@@ -146,7 +140,6 @@ mpirun -np $WORLD_SIZE \
   ${CHECKPOINT_ARGS} \
   --save ${CHECKPOINT_SAVE_DIR} \
   --data-path ${TRAIN_DATA_PATH} \
-  --split 970,30,0 \
   --distributed-backend nccl \
   --lr ${LR} \
   --min-lr ${MIN_LR} \
@@ -157,11 +150,11 @@ mpirun -np $WORLD_SIZE \
   --optimizer adam \
   --adam-beta1 0.9 \
   --adam-beta2 0.95 \
-  --log-interval 10 \
+  --log-interval 1 \
   --log-progress \
-  --save-interval 300 \
-  --eval-interval 10 \
-  --eval-iters 1 \
+  --save-interval 100 \
+  --eval-interval 100 \
+  --eval-iters 10 \
   --bf16 \
   --untie-embeddings-and-output-weights \
   --use-rotary-position-embeddings \
@@ -189,5 +182,3 @@ mpirun -np $WORLD_SIZE \
   --rotary-base 500000 \
   --rotary-percent 1.0 \
   --use-rope-scaling \
-  --ckpt-convert-format torch \
-  --ckpt-convert-save ${PATH_TO_TORCH_CKPT}

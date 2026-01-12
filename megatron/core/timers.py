@@ -427,6 +427,7 @@ class Timers:
         normalizer: float = 1.0,
         reset: bool = True,
         barrier: bool = False,
+        wandb_writer = None,
     ):
         """Write timers to a tensorboard writer.
         Note that we only report maximum time across ranks to tensorboard.

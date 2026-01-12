@@ -1,7 +1,7 @@
 #! /bin/sh
 #$ -cwd
 #$ -l node_f=4
-#$ -l h_rt=01:00:00
+#$ -l h_rt=23:00:00
 
 # module load
 module load openmpi/5.0.7-gcc
@@ -55,11 +55,11 @@ echo $DATA_PARALLEL_SIZE
 # training config
 MICRO_BATCH_SIZE=1
 GLOBAL_BATCH_SIZE=512
-TRAIN_STEPS=1000
+TRAIN_STEPS=3000
 
 LR=1e-4
 MIN_LR=1e-5
-LR_WARMUP_STEPS=50
+LR_WARMUP_STEPS=300
 WEIGHT_DECAY=0.1
 GRAD_CLIP=1
 
@@ -157,7 +157,7 @@ mpirun -np $WORLD_SIZE \
   --adam-beta2 0.95 \
   --log-interval 10 \
   --log-progress \
-  --save-interval 100 \
+  --save-interval 300 \
   --eval-interval 10 \
   --eval-iters 1 \
   --bf16 \
