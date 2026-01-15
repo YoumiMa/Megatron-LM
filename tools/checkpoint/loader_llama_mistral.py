@@ -306,6 +306,9 @@ def load_args_from_checkpoint(args, model_size):
     args.vocab_size = model_args["vocab_size"]
     args.padded_vocab_size = model_args["vocab_size"]
     args.ffn_hidden_size = model_args["intermediate_size"]
+    args.rotary_base = model_args["rope_theta"]
+    args.rope_theta = model_args["rope_theta"]
+    args.rope_scaling = model_args["rope_scaling"]
 
     if "num_key_value_heads" in model_args:
         args.group_query_attention = True
@@ -555,6 +558,8 @@ def _load_checkpoint(queue, args):
     md.checkpoint_args = margs
     md.consumed_train_samples = 0
     md.consumed_valid_samples = 0
+    md.rope_theta = margs.rope_theta
+    md.rope_scaling = margs.rope_scaling
 
     margs.model_size = args.model_size
 

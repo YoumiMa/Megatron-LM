@@ -13,16 +13,15 @@ mkdir -p ${MEGATRON_FORMAT_DIR}
 # tokenizer config
 TOKENIZER_MODEL="meta-llama/Llama-3.1-8B"
 cd ~/Megatron-LM
-MODEL_SIZE="llama3"
 export CUDA_DEVICE_MAX_CONNECTIONS=1
 
 torchrun --nproc_per_node=2 \
     tools/checkpoint/convert.py \
     --model-type GPT \
     --loader llama_mistral \
-    --load-dir ${HF_FORMAT_DIR} \
-    --model-size ${MODEL_SIZE} \
+    --model-size llama3 \
     --checkpoint-type hf \
+    --load-dir ${HF_FORMAT_DIR} \
     --tokenizer-model ${TOKENIZER_MODEL} \
     --saver mcore \
     --save-dir ${MEGATRON_FORMAT_DIR} \

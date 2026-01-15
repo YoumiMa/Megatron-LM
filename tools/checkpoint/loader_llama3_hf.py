@@ -59,8 +59,9 @@ def load_args_from_checkpoint(args):
     args.padded_vocab_size = llama_args["vocab_size"]
     args.llama = llama_args
     args.ffn_hidden_size = llama_args["intermediate_size"]
+    args.rotary_base = llama_args["rope_theta"]
     args.rope_theta = llama_args["rope_theta"]
-    args.params_dtype = llama_args["torch_dtype"]
+    args.rope_scaling = llama_args["rope_scaling"]
 
     if "num_key_value_heads" in llama_args:
         args.group_query_attention = True

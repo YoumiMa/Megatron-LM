@@ -5,8 +5,10 @@ TENSOR_PARALLEL_SIZE=1   # fixed
 PIPELINE_PARALLEL_SIZE=2
 
 # model config
-MEGATRON_FORMAT_DIR=/gs/bs/tga-okazaki/ma/ckpts/llama-3.1-8B-megatron_tp${TENSOR_PARALLEL_SIZE}_pp${PIPELINE_PARALLEL_SIZE}_LR1e-4/
-HF_FORMAT_DIR=/gs/bs/tga-okazaki/ma/ckpts/llama-3.1-8B-megatron_tp${TENSOR_PARALLEL_SIZE}_pp${PIPELINE_PARALLEL_SIZE}_LR1e-4_hf/
+MEGATRON_FORMAT_DIR=/gs/bs/tga-okazaki/ma/ckpts/llama-3.1-8B-megatron_tp${TENSOR_PARALLEL_SIZE}_pp${PIPELINE_PARALLEL_SIZE}_LR1e-4_test/torch/
+HF_FORMAT_DIR=/gs/bs/tga-okazaki/ma/ckpts/llama-3.1-8B-megatron_tp${TENSOR_PARALLEL_SIZE}_pp${PIPELINE_PARALLEL_SIZE}_LR1e-4_test/hf/
+# MEGATRON_FORMAT_DIR=/gs/bs/tga-okazaki/ma/cache/Llama-3.1-8B/megatron_tp${TENSOR_PARALLEL_SIZE}_pp${PIPELINE_PARALLEL_SIZE}
+# HF_FORMAT_DIR=/gs/bs/tga-okazaki/ma/ckpts/llama-3.1-8B-megatron_tp${TENSOR_PARALLEL_SIZE}_pp${PIPELINE_PARALLEL_SIZE}/hf/
 
 mkdir -p ${HF_FORMAT_DIR}
 

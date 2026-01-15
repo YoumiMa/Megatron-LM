@@ -87,7 +87,8 @@ def save_checkpoint(queue: mp.Queue, args):
         bos_token_id=128000,
         eos_token_id=128001,
         tie_word_embeddings=not mag_conf.untie_embeddings_and_output_weights,
-        rope_theta=mag_conf.rotary_base,
+        rope_theta=mag_conf.rope_theta,
+        rope_scaling=mag_conf.rope_scaling,
         attention_bias=mag_conf.add_bias_linear,
         torch_dtype=torch_dtype
     )

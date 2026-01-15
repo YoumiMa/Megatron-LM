@@ -66,8 +66,8 @@ GRAD_CLIP=1
 # model config
 TOKENIZER_MODEL=meta-llama/Llama-3.1-8B
 CHECKPOINT_DIR=/gs/bs/tga-okazaki/ma/cache/Llama-3.1-8B/megatron_tp1_pp2/
-CHECKPOINT_SAVE_DIR=/gs/bs/tga-okazaki/ma/ckpts/llama-3.1-8B-megatron_tp${TENSOR_PARALLEL_SIZE}_pp${PIPELINE_PARALLEL_SIZE}_LR${LR}
-PATH_TO_TORCH_CKPT=/gs/bs/tga-okazaki/ma/ckpts/llama-3.1-8B-megatron_tp${TENSOR_PARALLEL_SIZE}_pp${PIPELINE_PARALLEL_SIZE}_LR${LR}_torch/
+CHECKPOINT_SAVE_DIR=/gs/bs/tga-okazaki/ma/ckpts/llama-3.1-8B-megatron_tp${TENSOR_PARALLEL_SIZE}_pp${PIPELINE_PARALLEL_SIZE}_LR${LR}_test/
+PATH_TO_TORCH_CKPT=/gs/bs/tga-okazaki/ma/ckpts/llama-3.1-8B-megatron_tp${TENSOR_PARALLEL_SIZE}_pp${PIPELINE_PARALLEL_SIZE}_LR${LR}_test/
 
 mkdir -p ${CHECKPOINT_SAVE_DIR}
 mkdir -p ${PATH_TO_TORCH_CKPT}
