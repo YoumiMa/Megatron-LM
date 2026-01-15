@@ -507,7 +507,8 @@ class MCoreSavePlanner(DefaultSavePlanner):
     def create_global_plan(self, all_plans: List[MCoreSavePlan]) -> Tuple[List[SavePlan], Metadata]:
         """Merges MCore data for all plans."""
         global_plan, metadata = super().create_global_plan(all_plans)
-       mcore_data = dict(
+        # metadata.mcore_data = dict(
+        mcore_data = dict(
             ChainMap(*(plan.mcore_data for plan in all_plans))  # type: ignore[arg-type]
         )
         metadata = MCoreMetadata(mcore_data=mcore_data, **vars(metadata))

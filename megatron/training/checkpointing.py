@@ -1176,6 +1176,11 @@ def load_args_from_checkpoint(
     # Checkpoint args.
     _set_arg('ckpt_format')
 
+    
+    _set_arg('rope_theta')
+    _set_arg('rope_scaling')
+    
+
     # Model parallelism args.
     if args.use_mp_args_from_checkpoint_args:
         if checkpoint_version < 3.0:
