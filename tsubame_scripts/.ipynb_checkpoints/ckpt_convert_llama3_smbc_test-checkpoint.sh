@@ -1,7 +1,7 @@
 #! /bin/sh
 #$ -cwd
-#$ -l node_f=4
-#$ -l h_rt=42:00:00
+#$ -l node_f=1
+#$ -l h_rt=00:10:00
 
 # module load
 module load openmpi/5.0.7-gcc
@@ -14,6 +14,7 @@ echo "Number of slots: ${NSLOTS}"
 export MASTER_ADDR=$(head -n1 $PE_HOSTFILE | awk '{print $1}')
 export MASTER_PORT=$(python3 -c "import socket; s=socket.socket(); s.bind(('',0)); print(s.getsockname()[1]); s.close()")
 
+ITER=0000002
 
 echo "MASTER_ADDR=${MASTER_ADDR}"
 echo "MASTER_PORT=${MASTER_PORT}"
@@ -55,18 +56,19 @@ echo $DATA_PARALLEL_SIZE
 # training config
 MICRO_BATCH_SIZE=1
 GLOBAL_BATCH_SIZE=512
-TRAIN_STEPS=3600
+TRAIN_STEPS=3000
 
-LR=2.5e-5
-MIN_LR=2.5e-6
-LR_WARMUP_STEPS=360
+LR=1e-4
+MIN_LR=1e-5
+LR_WARMUP_STEPS=300
 WEIGHT_DECAY=0.1
 GRAD_CLIP=1
 
 # model config
 TOKENIZER_MODEL=meta-llama/Llama-3.1-8B
 CHECKPOINT_DIR=/gs/bs/tga-okazaki/ma/cache/Llama-3.1-8B/megatron_tp1_pp2/
-CHECKPOINT_SAVE_DIR=/gs/bs/tga-okazaki/ma/ckpts/llama-3.1-8B-megatron_tp${TENSOR_PARALLEL_SIZE}_pp${PIPELINE_PARALLEL_SIZE}_LR${LR}_exp2/
+CHECKPOINT_SAVE_DIR=/gs/bs/tga-okazaki/ma/ckpts/llama-3.1-8B-megatron_tp${TENSOR_PARALLEL_SIZE}_pp${PIPELINE_PARALLEL_SIZE}_LR${LR}_test
+PATH_TO_TORCH_CKPT=/gs/bs/tga-okazaki/ma/ckpts/llama-3.1-8B-megatron_tp${TENSOR_PARALLEL_SIZE}_pp${PIPELINE_PARALLEL_SIZE}_LR${LR}_test
 
 mkdir -p ${CHECKPOINT_SAVE_DIR}
 
@@ -93,7 +95,7 @@ done
 echo "TRAIN_DATA_PATH=$TRAIN_DATA_PATH"
 
 # job name
-JOB_NAME="Llama-3.1-8b-${NODE_TYPE}-${NUM_NODES}node-${NUM_GPUS}gpu-exp2"
+JOB_NAME="Llama-3.1-8b-${NODE_TYPE}-${NUM_NODES}node-${NUM_GPUS}gpu"
 
 # checkpoint load
 if [ -f "${CHECKPOINT_SAVE_DIR}/latest_checkpointed_iteration.txt" ]; then
@@ -156,9 +158,8 @@ mpirun -np $WORLD_SIZE \
   --adam-beta1 0.9 \
   --adam-beta2 0.95 \
   --log-interval 10 \
-  --log-progress \
-  --save-interval 600 \
-  --eval-interval 10 \
+  --save-interval 1 \
+  --eval-interval 1 \
   --eval-iters 1 \
   --bf16 \
   --untie-embeddings-and-output-weights \
@@ -187,3 +188,7 @@ mpirun -np $WORLD_SIZE \
   --rotary-base 500000 \
   --rotary-percent 1.0 \
   --use-rope-scaling \
+
+  --ckpt-step ${ITER} \
+  --ckpt-convert-format torch \
+  --ckpt-convert-save ${PATH_TO_TORCH_CKPT}

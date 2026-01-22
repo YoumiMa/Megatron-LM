@@ -7,8 +7,8 @@ import torch
 from transformers import LlamaForCausalLM
 
 def compare():
-    converted_path = "/gs/bs/tga-okazaki/ma/cache/Llama-3.1-8B/megatron_tp1_pp2/hf"
-    original_path = "/gs/bs/tga-okazaki/ma/cache/Llama-3.1-8B"
+    converted_path = "/gs/bs/tga-okazaki/ma/cache/Llama-3.1-Swallow-8B-v0.5/megatron_tp1_pp2/converted_hf"
+    original_path = "/gs/bs/tga-okazaki/ma/cache/Llama-3.1-Swallow-8B-v0.5"
     
     print("Loading converted model...")
     converted = LlamaForCausalLM.from_pretrained(converted_path, torch_dtype=torch.float32)

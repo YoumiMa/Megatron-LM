@@ -1,7 +1,7 @@
 #! /bin/sh
 #$ -cwd
 #$ -l node_f=4
-#$ -l h_rt=42:00:00
+#$ -l h_rt=36:00:00
 
 # module load
 module load openmpi/5.0.7-gcc
@@ -57,21 +57,21 @@ MICRO_BATCH_SIZE=1
 GLOBAL_BATCH_SIZE=512
 TRAIN_STEPS=3600
 
-LR=2.5e-5
-MIN_LR=2.5e-6
+LR=5e-5
+MIN_LR=5e-6
 LR_WARMUP_STEPS=360
 WEIGHT_DECAY=0.1
 GRAD_CLIP=1
 
 # model config
-TOKENIZER_MODEL=meta-llama/Llama-3.1-8B
-CHECKPOINT_DIR=/gs/bs/tga-okazaki/ma/cache/Llama-3.1-8B/megatron_tp1_pp2/
-CHECKPOINT_SAVE_DIR=/gs/bs/tga-okazaki/ma/ckpts/llama-3.1-8B-megatron_tp${TENSOR_PARALLEL_SIZE}_pp${PIPELINE_PARALLEL_SIZE}_LR${LR}_exp5/
+TOKENIZER_MODEL=tokyotech-llm/Llama-3.1-Swallow-8B-v0.5
+CHECKPOINT_DIR=/gs/bs/tga-okazaki/ma/cache/Llama-3.1-Swallow-8B-v0.5/megatron_tp1_pp2/
+CHECKPOINT_SAVE_DIR=/gs/bs/tga-ma/ma/ckpts/llama-3.1-swallow-8B-v0.5-megatron_tp${TENSOR_PARALLEL_SIZE}_pp${PIPELINE_PARALLEL_SIZE}_LR${LR}_exp3/
 
 mkdir -p ${CHECKPOINT_SAVE_DIR}
 
 # data config
-DATASET_DIR="/gs/bs/tga-okazaki/ma/data/smbcgic_replace_en_with_translated"
+DATASET_DIR="/gs/bs/tga-okazaki/ma/data/smbcgic_processed"
 
 TRAIN_DATA_PATH=""
 
@@ -93,7 +93,7 @@ done
 echo "TRAIN_DATA_PATH=$TRAIN_DATA_PATH"
 
 # job name
-JOB_NAME="Llama-3.1-8b-${NODE_TYPE}-${NUM_NODES}node-${NUM_GPUS}gpu-exp5"
+JOB_NAME="Llama-3.1-Swallow-8b-${NODE_TYPE}-${NUM_NODES}node-${NUM_GPUS}gpu-exp3"
 
 # checkpoint load
 if [ -f "${CHECKPOINT_SAVE_DIR}/latest_checkpointed_iteration.txt" ]; then
@@ -110,7 +110,7 @@ echo "world size is: ${WORLD_SIZE}"
 echo "hostfile: $HOSTFILE_NAME"
 cd ~/fs/Megatron-LM/
 
-CONTAINER_IMAGE="/gs/fs/tga-okazaki/ma/megatron-container"
+CONTAINER_IMAGE="/gs/fs/tga-ma/ma/megatron-container"
 # run
 mpirun -np $WORLD_SIZE \
   --npernode $NUM_GPU_PER_NODE \

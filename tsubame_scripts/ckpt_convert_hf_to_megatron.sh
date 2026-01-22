@@ -5,13 +5,13 @@ TENSOR_PARALLEL_SIZE=1   # fixed
 PIPELINE_PARALLEL_SIZE=2
 
 # model config
-HF_FORMAT_DIR=/gs/bs/tga-okazaki/ma/cache/Llama-3.1-8B
-MEGATRON_FORMAT_DIR=/gs/bs/tga-okazaki/ma/cache/Llama-3.1-8B/megatron_tp${TENSOR_PARALLEL_SIZE}_pp${PIPELINE_PARALLEL_SIZE}
+HF_FORMAT_DIR=/gs/bs/tga-okazaki/ma/cache/Llama-3.1-Swallow-8B-v0.5
+MEGATRON_FORMAT_DIR=/gs/bs/tga-okazaki/ma/cache/Llama-3.1-Swallow-8B-v0.5/megatron_tp${TENSOR_PARALLEL_SIZE}_pp${PIPELINE_PARALLEL_SIZE}
 
 mkdir -p ${MEGATRON_FORMAT_DIR}
 
 # tokenizer config
-TOKENIZER_MODEL="meta-llama/Llama-3.1-8B"
+TOKENIZER_MODEL="tokyotech-llm/Llama-3.1-Swallow-8B-v0.5"
 cd ~/Megatron-LM
 export CUDA_DEVICE_MAX_CONNECTIONS=1
 
