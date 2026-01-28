@@ -125,7 +125,7 @@ mpirun -np $WORLD_SIZE \
   apptainer run --nv \
   --env MASTER_ADDR=$MASTER_ADDR \
   --env MASTER_PORT=$MASTER_PORT \
-  -w -B /gs -B /apps -B /home ${CONTAINER_IMAGE} \
+  -w -B /gs -B /apps -B /home -B /gs/fs/tga-okazaki/ma:/root ${CONTAINER_IMAGE} \
   python pretrain_gpt.py \
   --tensor-model-parallel-size ${TENSOR_PARALLEL_SIZE} \
   --pipeline-model-parallel-size ${PIPELINE_PARALLEL_SIZE} \
