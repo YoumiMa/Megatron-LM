@@ -38,7 +38,6 @@ while read -r line; do
 done < "$PE_HOSTFILE" > "$HOSTFILE_NAME"
 
 # model config
-# llama-2-7b: https://huggingface.co/meta-llama/Llama-2-7b-hf/blob/main/config.json
 HIDDEN_SIZE=4096
 FFN_HIDDEN_SIZE=14336 # intermediate size (HuggingFace)
 NUM_LAYERS=32

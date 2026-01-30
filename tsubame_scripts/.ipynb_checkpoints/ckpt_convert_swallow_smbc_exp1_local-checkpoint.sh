@@ -1,40 +1,13 @@
-#! /bin/sh
-#$ -cwd
-#$ -l node_f=4
-#$ -l h_rt=36:00:00
+ITER=0003600
 
-# module load
-module load openmpi/5.0.7-gcc
-
-cat $PE_HOSTFILE
-echo $NHOSTS
-echo "Number of slots: ${NSLOTS}"
-# export MASTER_ADDR=$(cat $PE_HOSTFILE | head -1 | cut -d ' ' -f 1)
-# export MASTER_PORT=$((10000 + ($JOB_ID % 50000)))
-export MASTER_ADDR=$(head -n1 $PE_HOSTFILE | awk '{print $1}')
-export MASTER_PORT=$(python3 -c "import socket; s=socket.socket(); s.bind(('',0)); print(s.getsockname()[1]); s.close()")
-
-
-echo "MASTER_ADDR=${MASTER_ADDR}"
-echo "MASTER_PORT=${MASTER_PORT}"
+MASTER_ADDR=localhost
+MASTER_PORT=29500
 
 NODE_TYPE="h100"
 export NUM_GPU_PER_NODE=$(nvidia-smi -L | wc -l)
 
-NUM_NODES=$(wc -l < "$PE_HOSTFILE")
+NUM_NODES=1
 NUM_GPUS=$((${NUM_NODES} * ${NUM_GPU_PER_NODE}))
-
-mkdir -p ./hostfile
-
-HOSTFILE_NAME=./hostfile/hostfile_${JOB_ID}
-
-# 元のホストファイルを読んで、スロット数を48で割ってGPU数に変換
-while read -r line; do
-  hostname=$(echo "$line" | awk '{print $1}')
-  slots=$(echo "$line" | awk '{print $2}')
-  gpus=$((slots / 48))
-  echo "${hostname} slots=${gpus}"
-done < "$PE_HOSTFILE" > "$HOSTFILE_NAME"
 
 # model config
 HIDDEN_SIZE=4096
@@ -56,8 +29,8 @@ MICRO_BATCH_SIZE=1
 GLOBAL_BATCH_SIZE=512
 TRAIN_STEPS=3600
 
-LR=5e-5
-MIN_LR=5e-6
+LR=1e-5
+MIN_LR=1e-6
 LR_WARMUP_STEPS=360
 WEIGHT_DECAY=0.1
 GRAD_CLIP=1
@@ -65,7 +38,8 @@ GRAD_CLIP=1
 # model config
 TOKENIZER_MODEL=tokyotech-llm/Llama-3.1-Swallow-8B-v0.5
 CHECKPOINT_DIR=/gs/bs/tga-okazaki/ma/cache/Llama-3.1-Swallow-8B-v0.5/megatron_tp1_pp2/
-CHECKPOINT_SAVE_DIR=/gs/bs/tga-ma/ma/ckpts/llama-3.1-swallow-8B-v0.5-megatron_tp${TENSOR_PARALLEL_SIZE}_pp${PIPELINE_PARALLEL_SIZE}_LR${LR}_exp3/
+CHECKPOINT_SAVE_DIR=/gs/bs/tga-ma/ma/ckpts/llama-3.1-swallow-8B-v0.5-megatron_tp${TENSOR_PARALLEL_SIZE}_pp${PIPELINE_PARALLEL_SIZE}_LR${LR}_exp1/
+PATH_TO_TORCH_CKPT=/gs/bs/tga-ma/ma/ckpts/llama-3.1-swallow-8B-v0.5-megatron_tp${TENSOR_PARALLEL_SIZE}_pp${PIPELINE_PARALLEL_SIZE}_LR${LR}_exp1/
 
 mkdir -p ${CHECKPOINT_SAVE_DIR}
 
@@ -92,7 +66,7 @@ done
 echo "TRAIN_DATA_PATH=$TRAIN_DATA_PATH"
 
 # job name
-JOB_NAME="Llama-3.1-Swallow-8b-${NODE_TYPE}-${NUM_NODES}node-${NUM_GPUS}gpu-exp3"
+JOB_NAME="Llama-3.1-Swallow-8b-${NODE_TYPE}-${NUM_NODES}node-${NUM_GPUS}gpu-exp1"
 
 # checkpoint load
 if [ -f "${CHECKPOINT_SAVE_DIR}/latest_checkpointed_iteration.txt" ]; then
@@ -106,26 +80,20 @@ fi
 echo "The CHECKPOINT ARG is:  ${CHECKPOINT_ARGS}"
 export WORLD_SIZE=$NUM_GPUS
 echo "world size is: ${WORLD_SIZE}"
-echo "hostfile: $HOSTFILE_NAME"
+
 cd ~/fs/Megatron-LM/
 
 CONTAINER_IMAGE="/gs/fs/tga-ma/ma/megatron-container"
 # run
-mpirun -np $WORLD_SIZE \
-  --npernode $NUM_GPU_PER_NODE \
-  -hostfile $HOSTFILE_NAME \
-  -x MASTER_ADDR=$MASTER_ADDR \
-  -x MASTER_PORT=$MASTER_PORT \
-  -x CUDA_DEVICE_MAX_CONNECTIONS=1 \
-  -x LD_LIBRARY_PATH \
-  -x NCCL_P2P_LEVEL=NVL \
-  -x PATH \
-  -bind-to none \
   apptainer run --nv \
+  --env WORLD_SIZE=$WORLD_SIZE \
   --env MASTER_ADDR=$MASTER_ADDR \
   --env MASTER_PORT=$MASTER_PORT \
-  -f -w -B /gs -B /apps -B /home -B /gs/fs/tga-okazaki/ma:/root ${CONTAINER_IMAGE} \
-  python pretrain_gpt.py \
+  -w -B /gs -B /apps -B /home -B /gs/fs/tga-okazaki/ma:/root ${CONTAINER_IMAGE} \
+  torchrun --nproc_per_node=${NUM_GPUS} \
+    --master_addr=$MASTER_ADDR \
+    --master_port=$MASTER_PORT \
+  pretrain_gpt.py \
   --tensor-model-parallel-size ${TENSOR_PARALLEL_SIZE} \
   --pipeline-model-parallel-size ${PIPELINE_PARALLEL_SIZE} \
   --use-distributed-optimizer \
@@ -155,7 +123,6 @@ mpirun -np $WORLD_SIZE \
   --adam-beta1 0.9 \
   --adam-beta2 0.95 \
   --log-interval 10 \
-  --log-progress \
   --save-interval 600 \
   --eval-interval 10 \
   --eval-iters 1 \
@@ -175,7 +142,6 @@ mpirun -np $WORLD_SIZE \
   --use-flash-attn \
   --recompute-activations \
   --recompute-granularity "selective" \
-  --use-mpi \
   --log-throughput \
   --wandb-exp-name ${JOB_NAME} \
   --wandb-project "llm-cpt" \
@@ -186,3 +152,25 @@ mpirun -np $WORLD_SIZE \
   --rotary-base 500000 \
   --rotary-percent 1.0 \
   --use-rope-scaling \
+  --ckpt-step ${ITER} \
+  --ckpt-convert-format torch \
+  --ckpt-convert-save ${PATH_TO_TORCH_CKPT}
+
+
+# PROCS=$((TENSOR_PARALLEL_SIZE * PIPELINE_PARALLEL_SIZE))
+# echo $PROCS
+
+# TORCH_FORMAT_DIR=${PATH_TO_TORCH_CKPT}/torch
+# HF_FORMAT_DIR=${PATH_TO_TORCH_CKPT}/hf/iter_${ITER}
+
+#   apptainer run --nv \
+#   -w -B /gs -B /apps -B /home ${CONTAINER_IMAGE} \
+#     torchrun --nproc_per_node=$PROCS \
+#         tools/checkpoint/convert.py \
+#          --model-type GPT \
+#          --loader core \
+#          --saver llama3_hf \
+#          --load-dir ${TORCH_FORMAT_DIR} \
+#          --save-dir ${HF_FORMAT_DIR} \
+#          --megatron-path . \
+#          --hf-tokenizer-path /gs/bs/tga-okazaki/ma/cache/Llama-3.1-Swallow-8B-v0.5

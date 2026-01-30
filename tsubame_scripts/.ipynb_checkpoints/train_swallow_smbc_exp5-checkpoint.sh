@@ -37,7 +37,6 @@ while read -r line; do
 done < "$PE_HOSTFILE" > "$HOSTFILE_NAME"
 
 # model config
-# llama-2-7b: https://huggingface.co/meta-llama/Llama-2-7b-hf/blob/main/config.json
 HIDDEN_SIZE=4096
 FFN_HIDDEN_SIZE=14336 # intermediate size (HuggingFace)
 NUM_LAYERS=32
@@ -125,7 +124,7 @@ mpirun -np $WORLD_SIZE \
   apptainer run --nv \
   --env MASTER_ADDR=$MASTER_ADDR \
   --env MASTER_PORT=$MASTER_PORT \
-  -w -B /gs -B /apps -B /home -B /gs/fs/tga-okazaki/ma:/root ${CONTAINER_IMAGE} \
+  -f -w -B /gs -B /apps -B /home -B /gs/fs/tga-okazaki/ma:/root ${CONTAINER_IMAGE} \
   python pretrain_gpt.py \
   --tensor-model-parallel-size ${TENSOR_PARALLEL_SIZE} \
   --pipeline-model-parallel-size ${PIPELINE_PARALLEL_SIZE} \

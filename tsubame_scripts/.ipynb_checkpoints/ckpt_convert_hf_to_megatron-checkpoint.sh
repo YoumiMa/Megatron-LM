@@ -13,8 +13,12 @@ mkdir -p ${MEGATRON_FORMAT_DIR}
 # tokenizer config
 TOKENIZER_MODEL="tokyotech-llm/Llama-3.1-Swallow-8B-v0.5"
 cd ~/Megatron-LM
-export CUDA_DEVICE_MAX_CONNECTIONS=1
 
+export CUDA_DEVICE_MAX_CONNECTIONS=1
+CONTAINER_IMAGE="/gs/fs/tga-ma/ma/megatron-container"
+
+apptainer run --nv \
+-w -f -B /gs -B /apps -B /home -B /gs/fs/tga-okazaki/ma:/root ${CONTAINER_IMAGE} \
 torchrun --nproc_per_node=2 \
     tools/checkpoint/convert.py \
     --model-type GPT \
