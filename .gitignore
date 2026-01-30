@@ -3,6 +3,7 @@ __pycache__
 build
 .coverage_*
 *.egg-info
+.ipynb_checkpoints/
 *~
 slurm*
 logs
