@@ -238,6 +238,10 @@ def get_args():
     group.add_argument('--keep-sequential-samples', action='store_true',
                        help='Ensure ordering of samples in .jsonl files is '
                             'preserved when using partitions>1.')
+    group = parser.add_argument_group(title='tokenizer options')
+    group.add_argument('--use-fast-tokenizer', action='store_true',
+                       help='Use fast tokenizer (default: False)')
+    
     args = parser.parse_args()
     args.keep_empty = False
 
@@ -249,6 +253,8 @@ def get_args():
     args.make_vocab_size_divisible_by = 128
     args.tensor_model_parallel_size = 1
     args.vocab_extra_ids = 0
+
+    args.use_fast = args.use_fast_tokenizer if hasattr(args, 'use_fast_tokenizer') else False
 
     return args
 
