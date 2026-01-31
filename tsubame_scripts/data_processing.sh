@@ -25,6 +25,7 @@ for DIR in "$BASE_PATH"*/; do
             --tokenizer-type HuggingFaceTokenizer \
             --tokenizer-model tokyotech-llm/Llama-3.1-Swallow-8B-v0.5 \
             --append-eod \
+            --use-fast-tokenizer \
             --workers 64
         sleep 1
     done
