@@ -32,15 +32,6 @@ Apptainer > pip install transformers
 Apptainer > pip install accelerate
 ```
 
-## Megatron-LMの用意
-
-以下のコマンドでコードベースであるMegatron-LMをクローンする
-
-```jsx
-git clone https://github.com/YoumiMa/Megatron-LM
-git checkout my-changes
-```
-
 ## データの前処理
 
 datasetは`.jsonl.gz`形式のファイルの集まりであり、`"text"`というキーを含むことを前提とする。
@@ -86,39 +77,19 @@ done
 チェックポイントをhf形式→megatron形式に変換する(tsubame_scripts/ckpt_convert_hf_to_megatron.sh)
 
 ```jsx
-#!/bin/bash
-
-# distributed settings
-TENSOR_PARALLEL_SIZE=1   # fixed
-PIPELINE_PARALLEL_SIZE=2
-
-# model config
-HF_FORMAT_DIR=/gs/bs/tga-okazaki/ma/cache/Llama-3.1-Swallow-8B-v0.5
-MEGATRON_FORMAT_DIR=/gs/bs/tga-okazaki/ma/cache/Llama-3.1-Swallow-8B-v0.5/megatron_tp${TENSOR_PARALLEL_SIZE}_pp${PIPELINE_PARALLEL_SIZE}
-
-mkdir -p ${MEGATRON_FORMAT_DIR}
-
-# tokenizer config
-TOKENIZER_MODEL="tokyotech-llm/Llama-3.1-Swallow-8B-v0.5"
-cd ~/Megatron-LM
-export CUDA_DEVICE_MAX_CONNECTIONS=1
-
-torchrun --nproc_per_node=2 \
-    tools/checkpoint/convert.py \
-    --model-type GPT \
-    --loader llama_mistral \
-    --model-size llama3 \
-    --checkpoint-type hf \
-    --load-dir ${HF_FORMAT_DIR} \
-    --tokenizer-model ${TOKENIZER_MODEL} \
-    --saver mcore \
-    --save-dir ${MEGATRON_FORMAT_DIR} \
-    --target-tensor-parallel-size ${TENSOR_PARALLEL_SIZE} \
-    --target-pipeline-parallel-size ${PIPELINE_PARALLEL_SIZE} \
-    --bf16
+bash tsubame_scripts/ckpt_convert_hf_to_megatron.sh
 ```
 
 ## 学習
+
+### ローカル計算機環境
+
+```jsx
+bash tsubame_scripts/train_swallow_smbc_exp1_local.sh
+```
+
+
+### クラウド計算機環境
 
 ジョブを投げるコマンド
 
@@ -131,6 +102,16 @@ wandbの`llm-cpt`というプロジェクトにログが残る
 ## チェックポイント後処理
 
 torch_dist→torch→huggingface形式で変換
+
+### ローカル計算機環境
+
+```jsx
+## torch_dist to torch to huggingface
+bash tsubame_scripts/ckpt_convert_swallow_smbc_exp1_local.sh
+```
+
+### クラウド計算機環境
+
 
 ```jsx
 ## torch_dist to torch to huggingface

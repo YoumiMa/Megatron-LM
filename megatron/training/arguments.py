@@ -108,7 +108,7 @@ def parse_args(extra_args_provider=None, ignore_unknown_args=False):
     # Args from environment
     args.rank = int(os.getenv('RANK', '0'))
     args.world_size = int(os.getenv("WORLD_SIZE", '1'))
-
+    
     # Args to disable MSC
     if not args.enable_msc:
         MultiStorageClientFeature.disable()

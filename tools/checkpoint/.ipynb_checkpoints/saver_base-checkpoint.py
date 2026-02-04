@@ -135,9 +135,11 @@ class MegatronCheckpointSaverBase:
         # rope_theta
         if hasattr(self.md, 'rope_theta') and self.md.rope_theta is not None:
             margs.rope_theta = self.md.rope_theta
+            margs.rotary_base = self.md.rope_theta
         elif hasattr(self.md, 'checkpoint_args'):
             if hasattr(self.md.checkpoint_args, 'rope_theta'):
                 margs.rope_theta = self.md.checkpoint_args.rope_theta
+                margs.rotary_base = self.md.checkpoint_args.rope_theta
     
         # rope_scaling (dict形式のまま保存)
         if hasattr(self.md, 'rope_scaling') and self.md.rope_scaling is not None:
