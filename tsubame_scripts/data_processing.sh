@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # テキストファイルのパス
-OUTPUT_ROOT="/gs/bs/tga-okazaki/ma/data/smbcgic_translated_processed/"
+OUTPUT_ROOT="/gs/bs/tga-okazaki/ma/data/smbcgic_processed/"
 mkdir -p $OUTPUT_ROOT
 
-BASE_PATH="/gs/bs/tga-okazaki/ma/data/smbcgic_translated/"
+BASE_PATH="/gs/bs/tga-okazaki/ma/data/smbcgic/"
 CONTAINER_IMAGE="/gs/fs/tga-ma/ma/megatron-container"
 
 for DIR in "$BASE_PATH"*/; do
