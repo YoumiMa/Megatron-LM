@@ -1,0 +1,106 @@
+## /gs/bs/tga-okazaki/ma/data/smbcgic/
+[uj02089@login1 smbcgic]$ ls -R 
+.:
+arxiv          earnings_10k  finance_textbooks               naikakuhu_world_report  smbc_investigation_report
+bank_of_japan  edgar-corpus  naikakuhu_japan_report          nomura                  smbc_monthly_report
+daiwa          edinet        naikakuhu_keizaihakusyo_report  RDP_STORY               第一生命経済研究所_金融庁
+
+./arxiv:
+arxiv_cleaned.jsonl.gz
+
+./bank_of_japan:
+boj_documents_en.jsonl.gz  boj_documents_jp.jsonl.gz
+
+./daiwa:
+daiwa_terms.jsonl.gz
+
+./earnings_10k:
+earnings_calls_10k_disclosures.jsonl.gz
+
+./edgar-corpus:
+1993_2020_cleaned.jsonl.gz
+
+./edinet:
+edinet_text_data.jsonl.gz
+
+./finance_textbooks:
+finance_textbooks_html.jsonl.gz  finance_textbooks_md.jsonl.gz
+
+./naikakuhu_japan_report:
+naikakuhu_japan_report.jsonl.gz
+
+./naikakuhu_keizaihakusyo_report:
+naikakuhu_keizaihakusyo_report.jsonl.gz
+
+./naikakuhu_world_report:
+naikakuhu_world_report.jsonl.gz
+
+./nomura:
+nomura_terms.jsonl.gz
+
+./RDP_STORY:
+RTRS_ALL_deduped.jsonl.gz
+
+./smbc_investigation_report:
+smbc_investigation_report.jsonl.gz
+
+./smbc_monthly_report:
+smbc_monthly_report.jsonl.gz
+
+./第一生命経済研究所_金融庁:
+第一生命経済研究所_金融庁.jsonl.gz
+
+
+## /gs/bs/tga-okazaki/ma/data/smbcgic_replace_en_with_translated/
+
+[uj02089@login1 smbcgic_replace_en_with_translated]$ ls -R
+.:
+arxiv          earnings_10k  finance_textbooks               naikakuhu_world_report  smbc_investigation_report
+bank_of_japan  edgar-corpus  naikakuhu_japan_report          nomura                  smbc_monthly_report
+daiwa          edinet        naikakuhu_keizaihakusyo_report  RDP_STORY               第一生命経済研究所_金融庁
+
+./arxiv:
+arxiv_cleaned_translated_full_filtered.jsonl.gz
+
+./bank_of_japan:
+boj_documents_en.jsonl.gz  boj_documents_jp.jsonl.gz
+
+./daiwa:
+daiwa_terms.jsonl.gz
+
+./earnings_10k:
+earnings_calls_10k_disclosures_translated_full_filtered.jsonl.gz
+
+./edgar-corpus:
+1993_2020_cleaned_translated_full_filtered.jsonl.gz
+
+./edinet:
+edinet_text_data.jsonl.gz
+
+./finance_textbooks:
+finance_textbooks_html_translated_full_filtered.jsonl.gz  finance_textbooks_md_translated_full_filtered.jsonl.gz
+
+./naikakuhu_japan_report:
+naikakuhu_japan_report.jsonl.gz
+
+./naikakuhu_keizaihakusyo_report:
+naikakuhu_keizaihakusyo_report.jsonl.gz
+
+./naikakuhu_world_report:
+naikakuhu_world_report.jsonl.gz
+
+./nomura:
+nomura_terms.jsonl.gz
+
+./RDP_STORY:
+RTRS_ALL_deduped_lang_en_translated_full_filtered.jsonl.gz  RTRS_ALL_deduped_lang_ja.jsonl.gz
+
+./smbc_investigation_report:
+smbc_investigation_report.jsonl.gz
+
+./smbc_monthly_report:
+smbc_monthly_report.jsonl.gz
+
+./第一生命経済研究所_金融庁:
+第一生命経済研究所_金融庁.jsonl.gz
+
